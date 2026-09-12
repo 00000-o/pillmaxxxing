@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Календарь приёма витаминов</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2B2138">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3F1EA;
+    --ink:#241F1C;
+    --teal:#4A3B5C;
+    --teal-deep:#2B2138;
+    --coral:#D9694F;
+    --sky:#3E6E8E;
+    --plum:#6E5A9E;
+    --brick:#B23A2E;
+    --recovery:#C98A6B;
+    --rest:#DEDCD2;
+    --line: rgba(40,34,28,0.14);
+    --card:#FBFAF6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.5;
+    padding:0 0 60px 0;
+  }
+  .wrap{
+    max-width:640px;
+    margin:0 auto;
+    padding:36px 20px 0 20px;
+  }
+  header.top{
+    margin-bottom:20px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:1.9rem;
+    line-height:1.15;
+    margin:0 0 18px 0;
+    color:var(--teal-deep);
+  }
+
+  /* Tabs */
+  .tabs{
+    display:flex;
+    gap:8px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:0;
+  }
+  .tab-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:0.92rem;
+    font-weight:600;
+    background:none;
+    border:none;
+    padding:10px 4px 12px 4px;
+    color:#8A8377;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+  }
+  .tab-btn.active{
+    color:var(--teal-deep);
+    border-bottom:2px solid var(--teal-deep);
+  }
+
+  .view{display:none; padding-top:24px;}
+  .view.active{display:block;}
+
+  /* Month navigator */
+  .month-nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .nav-btn{
+    width:36px; height:36px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--card);
+    font-size:1.1rem;
+    color:var(--teal-deep);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex:0 0 auto;
+  }
+  .nav-btn:hover{background:var(--paper);}
+  .month-label{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:1.25rem;
+    color:var(--teal-deep);
+    text-align:center;
+    flex:1;
+  }
+  .today-btn{
+    display:inline-block;
+    margin:0 0 16px 0;
+    font-size:0.8rem;
+    font-weight:600;
+    background:none;
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:5px 14px;
+    color:var(--teal);
+    cursor:pointer;
+  }
+  .today-btn:hover{background:var(--card);}
+  .hint{
+    font-size:0.82rem;
+    color:#8A8377;
+    margin:0 0 20px 0;
+  }
+  .hint a{color:var(--teal); cursor:pointer; text-decoration:underline;}
+
+  /* Calendar grid */
+  .weekday-row{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    margin-bottom:6px;
+  }
+  .weekday-row span{
+    text-align:center;
+    font-size:0.75rem;
+    letter-spacing:0.02em;
+    color:#8A8377;
+    font-weight:500;
+  }
+  .days-grid{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:6px;
+  }
+  .day-cell{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    min-height:78px;
+    padding:7px 6px;
+    position:relative;
+    cursor:pointer;
+    transition:transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .day-cell.empty{background:transparent; border:none; cursor:default;}
+  .day-cell:not(.empty):hover{
+    transform:translateY(-2px);
+    box-shadow:0 4px 12px rgba(40,34,28,0.10);
+  }
+  .day-cell.today{
+    border:1.5px solid var(--teal);
+    box-shadow:0 0 0 3px rgba(74,59,92,0.10);
+  }
+  .date-num{
+    font-size:0.8rem;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:5px;
+  }
+  .day-cell.today .date-num::after{
+    content:" · сегодня";
+    font-weight:400;
+    font-size:0.64rem;
+    color:var(--teal);
+  }
+  .badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:3px;
+  }
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:auto;
+    min-width:22px;
+    height:22px;
+    padding:0 5px;
+    border-radius:11px;
+    font-size:0.58rem;
+    font-weight:600;
+    color:#fff;
+    line-height:1;
+  }
+  .badge-mg{background:var(--sky);}
+  .badge-c{background:var(--coral);}
+  .badge-cad{background:var(--plum);}
+  .badge-workout{background:var(--brick);}
+  .badge-recovery{background:var(--recovery);}
+
+  /* Legend (Details page) */
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px 26px;
+    margin:0 0 28px 0;
+  }
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:0.9rem;
+  }
+  .legend-item .badge{width:28px; height:28px; font-size:0.68rem;}
+  .legend-text b{display:block; font-weight:600; color:var(--ink);}
+  .legend-text span{color:#57514A; font-size:0.83rem;}
+
+  h2.section-title{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:1.2rem;
+    color:var(--teal-deep);
+    margin:0 0 14px 0;
+  }
+  .times{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:22px 22px;
+    margin-bottom:28px;
+  }
+  .time-row{
+    display:flex;
+    gap:16px;
+    padding:10px 0;
+    border-top:1px solid var(--line);
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  .time-row:first-of-type{border-top:none;}
+  .time-label{
+    flex:0 0 130px;
+    font-weight:600;
+    color:var(--teal);
+    font-size:0.9rem;
+  }
+  .time-content{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+  }
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:4px 12px 4px 6px;
+    font-size:0.83rem;
+  }
+
+  .note{
+    margin-bottom:28px;
+    padding:18px 20px;
+    background:#F1ECE4;
+    border:1px solid var(--line);
+    border-radius:12px;
+    font-size:0.87rem;
+    color:#4A4038;
+  }
+
+  .supply{margin-bottom:32px;}
+  table.supply-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.87rem;
+  }
+  table.supply-table th{
+    text-align:left;
+    font-weight:600;
+    color:#57514A;
+    font-size:0.76rem;
+    padding:8px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  table.supply-table td{
+    padding:9px 8px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  table.supply-table tr:last-child td{border-bottom:none;}
+
+  footer{
+    font-size:0.78rem;
+    color:#8A8377;
+    margin-top:8px;
+  }
+
+  /* Modal */
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(36,31,28,0.45);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:var(--card);
+    border-radius:16px;
+    max-width:420px;
+    width:100%;
+    max-height:82vh;
+    overflow-y:auto;
+    padding:26px 24px 22px 24px;
+    position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,0.25);
+  }
+  .modal-close{
+    position:absolute;
+    top:14px; right:14px;
+    background:none; border:none;
+    font-size:1.3rem; line-height:1;
+    color:#8A8377; cursor:pointer;
+    padding:4px;
+  }
+  .modal-close:hover{color:var(--ink);}
+  .modal-date{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:1.25rem;
+    color:var(--teal-deep);
+    margin:0 0 4px 0;
+  }
+  .modal-weekday{
+    font-size:0.83rem;
+    color:#8A8377;
+    margin:0 0 16px 0;
+    text-transform:capitalize;
+  }
+  .modal-item{
+    display:flex;
+    gap:12px;
+    padding:12px 0;
+    border-top:1px solid var(--line);
+  }
+  .modal-item:first-of-type{border-top:none;}
+  .modal-item .badge{flex:0 0 auto; height:26px; font-size:0.62rem;}
+  .modal-item-text b{display:block; font-size:0.93rem; color:var(--ink); margin-bottom:2px;}
+  .modal-item-text .dose{font-size:0.84rem; color:#4B5854;}
+  .modal-item-text .meta{font-size:0.77rem; color:#8A8377; margin-top:2px;}
+  .modal-empty{padding:18px 0 4px 0; color:#8A8377; font-size:0.9rem;}
+
+  @media (max-width:480px){
+    h1{font-size:1.55rem;}
+    .day-cell{min-height:68px; padding:5px 4px;}
+    .badge{height:18px; font-size:0.52rem;}
+    .time-row{flex-direction:column; gap:6px;}
+    .time-label{flex:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>Календарь приёма витаминов</h1>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="calendar" onclick="switchTab('calendar')">Календарь</button>
+      <button class="tab-btn" data-tab="details" onclick="switchTab('details')">Подробности</button>
+    </nav>
+  </header>
+
+  <!-- CALENDAR VIEW -->
+  <section id="view-calendar" class="view active">
+    <div class="month-nav">
+      <button class="nav-btn" onclick="changeMonth(-1)" aria-label="Предыдущий месяц">‹</button>
+      <div class="month-label" id="monthLabel"></div>
+      <button class="nav-btn" onclick="changeMonth(1)" aria-label="Следующий месяц">›</button>
+    </div>
+    <button class="today-btn" onclick="goToToday()">Сегодня</button>
+    <p class="hint">Кликните на день, чтобы увидеть план. Расшифровка значков — во <a onclick="switchTab('details')">вкладке «Подробности»</a>.</p>
+    <div class="weekday-row"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+    <div class="days-grid" id="daysGrid"></div>
+  </section>
+
+  <!-- DETAILS VIEW -->
+  <section id="view-details" class="view">
+
+    <div class="legend">
+      <div class="legend-item">
+        <span class="badge badge-mg">Mg</span>
+        <span class="legend-text"><b>Магний</b><span>1 таб · пн, ср, пт, вс</span></span>
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-cad">Ca+D</span>
+        <span class="legend-text"><b>Кальций + D3</b><span>1 таб · вт, чт, сб</span></span>
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-c">C½</span>
+        <span class="legend-text"><b>Витамин C</b><span>½ таб · ежедневно, ~неделю</span></span>
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-workout">Тр</span>
+        <span class="legend-text"><b>Тренировка (полная)</b><span>20–25 мин · пн, ср, сб</span></span>
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-recovery">St</span>
+        <span class="legend-text"><b>Растяжка/восстановление</b><span>10–15 мин · вс</span></span>
+      </div>
+    </div>
+
+    <div class="note">
+      Омега-3 и коллаген исключены из плана — просрочились. 12 сентября разово заменили кальций+D3 на магний по вашей просьбе; со следующего дня расписание идёт по обычной схеме.
+    </div>
+
+    <div class="times">
+      <h2 class="section-title">Расписание по дням недели</h2>
+      <div class="time-row">
+        <div class="time-label">Пн, Ср, Пт, Вс</div>
+        <div class="time-content">
+          <span class="pill"><span class="badge badge-mg" style="height:20px;font-size:0.55rem;">Mg</span>Магний, 1 таблетка</span>
+        </div>
+      </div>
+      <div class="time-row">
+        <div class="time-label">Вт, Чт, Сб</div>
+        <div class="time-content">
+          <span class="pill"><span class="badge badge-cad" style="height:20px;font-size:0.55rem;">Ca+D</span>Кальций + D3, 1 таблетка</span>
+        </div>
+      </div>
+      <div class="time-row">
+        <div class="time-label">Каждый день</div>
+        <div class="time-content">
+          <span class="pill"><span class="badge badge-c" style="height:20px;font-size:0.55rem;">C½</span>Витамин C, половинка — примерно неделю, пока не закончится</span>
+        </div>
+      </div>
+      <div class="time-row">
+        <div class="time-label">Когда именно</div>
+        <div class="time-content">
+          <span class="pill">Пн–Чт — после 19:00, вы на работе днём</span>
+          <span class="pill">Пт–Вс — в любое удобное время суток</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      Магний (пн/ср/пт/вс) и кальций+D3 (вт/чт/сб) не совпадают в один день — это единственное реальное ограничение по усвоению здесь.
+    </div>
+
+    <div class="supply">
+      <h2 class="section-title">Сколько хватит каждой упаковки</h2>
+      <table class="supply-table">
+        <thead>
+          <tr><th>Добавка</th><th>Осталось</th><th>Доза/приём</th><th>Дни недели</th><th>Курс до</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Витамин C</td><td>4 табл. (8 половинок)</td><td>½ табл.</td><td>Ежедневно</td><td>17 сентября (~1 неделя)</td></tr>
+          <tr><td>Магний</td><td>20 табл.</td><td>1 табл.</td><td>Пн, Ср, Пт, Вс (+ разово 12 сент.)</td><td>ориентировочно 12 октября</td></tr>
+          <tr><td>Кальций + D3</td><td>60–80 табл.</td><td>1 табл.</td><td>Вт, Чт, Сб</td><td>ориентировочно 20 февраля 2027</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="supply">
+      <h2 class="section-title">Тренировки: план возврата к домашним занятиям</h2>
+      <p style="font-size:0.9rem; color:#57514A; margin:0 0 16px 0;">Тонус и рельеф, упор на всё тело, 15–30 минут на тренировку, оба выходных дня задействованы.</p>
+      <table class="supply-table">
+        <thead>
+          <tr><th>Дни</th><th>Тип</th><th>Длительность</th><th>Минимум калорий</th><th>Акцент</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Пн, Ср, Сб</td><td>Полная тренировка</td><td>20–25 минут</td><td>≈200–250 ккал</td><td>Всё тело: присед, выпады, планка, отжимания</td></tr>
+          <tr><td>Вс</td><td>Растяжка / восстановление</td><td>10–15 минут</td><td>Не про калории</td><td>Мягкая мобилити после субботней нагрузки</td></tr>
+          <tr><td>Вт, Чт, Пт</td><td>Отдых</td><td>—</td><td>—</td><td>~48 часов на восстановление между силовыми днями</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.82rem; color:#8A8377; margin:14px 0 0 0;">Не гонитесь за максимальным сжиганием калорий: важнее качество движения и постепенный рост нагрузки.</p>
+    </div>
+
+    <footer>Это органайзер по количеству упаковок и вашему расписанию, а не медицинская рекомендация по дозировкам. Если принимаете и другие препараты или есть хронические состояния — сверьте схему с врачом или фармацевтом.</footer>
+
+  </section>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal()" aria-label="Закрыть">&times;</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const PLAN_START = new Date(2026,8,10);   // 10 Sep 2026
+  const TODAY      = new Date(2026,8,12);   // 12 Sep 2026 (today)
+  const PLAN_END   = new Date(2030,11,31);  // 31 Dec 2030
+  const OVERRIDE_DATE = '2026-09-12';       // swap: Mg instead of Ca+D3, one time
+
+  const MG_DAYS  = new Set([0,2,4,6]);  // Mon,Wed,Fri,Sun (0=Mon)
+  const CAD_DAYS = new Set([1,3,5]);    // Tue,Thu,Sat
+  const WORKOUT_FULL  = new Set([0,2,5]); // Mon,Wed,Sat
+  const WORKOUT_LIGHT = new Set([6]);     // Sun
+
+  const DOSES_NEEDED = { mg:20, c:8, caD:70 };
+
+  const ITEM_INFO = {
+    mg:    {label:'Магний', badge:'Mg', badgeClass:'badge-mg', dose:'1 таблетка (150 мг)', time:'Будни — после 19:00; сб/вс — в любое время', note:'Отдельно от кальция'},
+    caD:   {label:'Кальций + D3', badge:'Ca+D', badgeClass:'badge-cad', dose:'1 таблетка (200 мг Ca + 600 МЕ D3)', time:'Будни — после 19:00; сб/вс — в любое время', note:'Отдельно от магния'},
+    c:     {label:'Витамин C', badge:'C½', badgeClass:'badge-c', dose:'½ таблетки (450 мг)', time:'Любое время', note:'Ежедневно, пока не закончится (~8 дней)'},
+    workout: {label:'Тренировка дома (полная)', badge:'Тр', badgeClass:'badge-workout', dose:'20–25 минут, силовой формат на всё тело', time:'Любое удобное время', note:'≈200–250 ккал · присед, выпады, планка, отжимания'},
+    recovery: {label:'Лёгкое восстановление', badge:'St', badgeClass:'badge-recovery', dose:'10–15 минут растяжки/мобилити', time:'Любое удобное время', note:'Не силовая нагрузка — снимает закрепощение после субботней тренировки'}
+  };
+
+  function isoDate(d){
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function mondayIndex(d){
+    return (d.getDay()+6)%7; // 0=Mon ... 6=Sun
+  }
+
+  // Precompute the entire day->items map once
+  const DAY_DATA = {};
+  (function buildDayData(){
+    const counters = { mg:0, c:0, caD:0 };
+    let d = new Date(PLAN_START);
+    while(d <= PLAN_END){
+      const iso = isoDate(d);
+      const wd = mondayIndex(d);
+      const items = [];
+
+      if(iso === OVERRIDE_DATE){
+        if(counters.mg < DOSES_NEEDED.mg){ items.push('mg'); counters.mg++; }
+        // Ca+D3 intentionally skipped today
+      } else {
+        if(MG_DAYS.has(wd) && counters.mg < DOSES_NEEDED.mg){ items.push('mg'); counters.mg++; }
+        if(CAD_DAYS.has(wd) && counters.caD < DOSES_NEEDED.caD){ items.push('caD'); counters.caD++; }
+      }
+      if(counters.c < DOSES_NEEDED.c){ items.push('c'); counters.c++; }
+      if(WORKOUT_FULL.has(wd)) items.push('workout');
+      if(WORKOUT_LIGHT.has(wd)) items.push('recovery');
+
+      DAY_DATA[iso] = items;
+      d.setDate(d.getDate()+1);
+    }
+  })();
+
+  const MONTH_NAMES = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const MONTH_FULL_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const WEEKDAY_FULL = ['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'];
+
+  let viewYear = TODAY.getFullYear();
+  let viewMonth = TODAY.getMonth(); // 0-indexed
+
+  function renderCalendar(){
+    document.getElementById('monthLabel').textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
+    const grid = document.getElementById('daysGrid');
+    grid.innerHTML = '';
+
+    const firstOfMonth = new Date(viewYear, viewMonth, 1);
+    const lead = mondayIndex(firstOfMonth);
+    for(let i=0;i<lead;i++){
+      const empty = document.createElement('div');
+      empty.className = 'day-cell empty';
+      grid.appendChild(empty);
+    }
+
+    const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+    for(let day=1; day<=daysInMonth; day++){
+      const d = new Date(viewYear, viewMonth, day);
+      const iso = isoDate(d);
+      const items = DAY_DATA[iso] || [];
+      const cell = document.createElement('div');
+      cell.className = 'day-cell' + (iso === isoDate(TODAY) ? ' today' : '');
+      cell.onclick = () => showDay(iso);
+
+      const dateNum = document.createElement('div');
+      dateNum.className = 'date-num';
+      dateNum.textContent = day;
+      cell.appendChild(dateNum);
+
+      const badgesWrap = document.createElement('div');
+      badgesWrap.className = 'badges';
+      items.forEach(key => {
+        const info = ITEM_INFO[key];
+        const b = document.createElement('span');
+        b.className = 'badge ' + info.badgeClass;
+        b.title = info.label;
+        b.textContent = info.badge;
+        badgesWrap.appendChild(b);
+      });
+      cell.appendChild(badgesWrap);
+
+      grid.appendChild(cell);
+    }
+  }
+
+  function changeMonth(delta){
+    viewMonth += delta;
+    if(viewMonth < 0){ viewMonth = 11; viewYear--; }
+    if(viewMonth > 11){ viewMonth = 0; viewYear++; }
+    // clamp to plan range
+    const target = new Date(viewYear, viewMonth, 1);
+    if(target < new Date(PLAN_START.getFullYear(), PLAN_START.getMonth(), 1)){
+      viewYear = PLAN_START.getFullYear(); viewMonth = PLAN_START.getMonth();
+    }
+    if(target > new Date(PLAN_END.getFullYear(), PLAN_END.getMonth(), 1)){
+      viewYear = PLAN_END.getFullYear(); viewMonth = PLAN_END.getMonth();
+    }
+    renderCalendar();
+  }
+
+  function goToToday(){
+    viewYear = TODAY.getFullYear();
+    viewMonth = TODAY.getMonth();
+    renderCalendar();
+  }
+
+  function showDay(iso){
+    const items = DAY_DATA[iso] || [];
+    const [y,m,dd] = iso.split('-').map(Number);
+    const d = new Date(y, m-1, dd);
+    const weekday = WEEKDAY_FULL[mondayIndex(d)];
+    const dateStr = `${dd} ${MONTH_FULL_GEN[m-1]} ${y}`;
+    let html = `<div class="modal-date">${dateStr}</div><div class="modal-weekday">${weekday}</div>`;
+    if(items.length === 0){
+      html += `<div class="modal-empty">Свободный день — без добавок и без тренировки.</div>`;
+    } else {
+      items.forEach(key => {
+        const info = ITEM_INFO[key];
+        html += `<div class="modal-item">
+          <span class="badge ${info.badgeClass}">${info.badge}</span>
+          <div class="modal-item-text">
+            <b>${info.label}</b>
+            <div class="dose">${info.dose}</div>
+            <div class="meta">${info.time}${info.note ? ' · ' + info.note : ''}</div>
+          </div>
+        </div>`;
+      });
+    }
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+  function closeModal(){
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  function switchTab(tab){
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + tab).classList.add('active');
+  }
+
+  renderCalendar();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
+
+</body>
+</html>
