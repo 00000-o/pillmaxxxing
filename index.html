@@ -197,6 +197,7 @@
   }
   .badge-mg{background:var(--sky);}
   .badge-c{background:var(--coral);}
+  .badge-c-new{background:#C7A233;}
   .badge-cad{background:var(--plum);}
   .badge-workout{background:var(--brick);}
   .badge-recovery{background:var(--recovery);}
@@ -406,7 +407,11 @@
       </div>
       <div class="legend-item">
         <span class="badge badge-c">C½</span>
-        <span class="legend-text"><b>Витамин C</b><span>½ таб · ежедневно, ~неделю</span></span>
+        <span class="legend-text"><b>Витамин C (старый)</b><span>½ таб · сегодня и завтра</span></span>
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-c-new">C900</span>
+        <span class="legend-text"><b>Витамин C (новый)</b><span>1 целая таб · далее 17 дней</span></span>
       </div>
       <div class="legend-item">
         <span class="badge badge-workout">Тр</span>
@@ -420,6 +425,10 @@
 
     <div class="note">
       Омега-3 и коллаген исключены из плана — просрочились. 12 сентября разово заменили кальций+D3 на магний по вашей просьбе; со следующего дня расписание идёт по обычной схеме.
+    </div>
+
+    <div class="note">
+      Витамин C меняется на новый состав: сначала долепиваем остаток старого (½ таблетки — сегодня и завтра), затем 17 дней подряд — по целой таблетке нового (900 мг C + 40 мг магния + 9,5 мг калия). Новый тоже шипучий (сорбит + лимонная кислота), как и ваш магний. В дни, когда пьёте основной магний (пн/ср/пт/вс) уже после перехода на новую упаковку, суммарно магния будет ≈190 мг — это всё ещё безопасно, но если в такие дни почувствуете лёгкое послабление — дело, скорее всего, в двойной дозе сорбита за один день, а не в чём-то тревожном.
     </div>
 
     <div class="times">
@@ -437,9 +446,15 @@
         </div>
       </div>
       <div class="time-row">
-        <div class="time-label">Каждый день</div>
+        <div class="time-label">Сегодня, завтра</div>
         <div class="time-content">
-          <span class="pill"><span class="badge badge-c" style="height:20px;font-size:0.55rem;">C½</span>Витамин C, половинка — примерно неделю, пока не закончится</span>
+          <span class="pill"><span class="badge badge-c" style="height:20px;font-size:0.55rem;">C½</span>Витамин C (старый), половинка — долепить остаток</span>
+        </div>
+      </div>
+      <div class="time-row">
+        <div class="time-label">Следующие 17 дней</div>
+        <div class="time-content">
+          <span class="pill"><span class="badge badge-c-new" style="height:20px;font-size:0.55rem;">C900</span>Витамин C (новый), целая таблетка (900 мг)</span>
         </div>
       </div>
       <div class="time-row">
@@ -462,7 +477,8 @@
           <tr><th>Добавка</th><th>Осталось</th><th>Доза/приём</th><th>Дни недели</th><th>Курс до</th></tr>
         </thead>
         <tbody>
-          <tr><td>Витамин C</td><td>4 табл. (8 половинок)</td><td>½ табл.</td><td>Ежедневно</td><td>17 сентября (~1 неделя)</td></tr>
+          <tr><td>Витамин C (старый)</td><td>1 табл. (2 половинки)</td><td>½ табл.</td><td>Ежедневно</td><td>заканчивается завтра</td></tr>
+          <tr><td>Витамин C (новый)</td><td>17 табл.</td><td>1 табл.</td><td>Ежедневно, после старого</td><td>~17 дней после перехода</td></tr>
           <tr><td>Магний</td><td>20 табл.</td><td>1 табл.</td><td>Пн, Ср, Пт, Вс (+ разово 12 сент.)</td><td>ориентировочно 12 октября</td></tr>
           <tr><td>Кальций + D3</td><td>60–80 табл.</td><td>1 табл.</td><td>Вт, Чт, Сб</td><td>ориентировочно 20 февраля 2027</td></tr>
         </tbody>
@@ -499,8 +515,9 @@
 </div>
 
 <script>
-  const PLAN_START = new Date(2026,8,10);   // 10 Sep 2026
-  const TODAY      = new Date(2026,8,12);   // 12 Sep 2026 (today)
+  const PLAN_START = new Date(2026,8,10);   // 10 Sep 2026 — plan start (fixed, historical)
+  const TODAY      = new Date();            // real current date from the device
+  TODAY.setHours(0,0,0,0);
   const PLAN_END   = new Date(2030,11,31);  // 31 Dec 2030
   const OVERRIDE_DATE = '2026-09-12';       // swap: Mg instead of Ca+D3, one time
 
@@ -509,12 +526,16 @@
   const WORKOUT_FULL  = new Set([0,2,5]); // Mon,Wed,Sat
   const WORKOUT_LIGHT = new Set([6]);     // Sun
 
-  const DOSES_NEEDED = { mg:20, c:8, caD:70 };
+  const DOSES_NEEDED = { mg:20, caD:70 };
+  const C_START = new Date(TODAY); // today: 2 more half-doses of the OLD tablet, then 17 whole NEW tablets
+  const C_OLD_REMAINING = 2;   // half-tablets left of the old 900mg-per-tablet stock
+  const C_NEW_COUNT = 17;      // new tablets (900mg C + 40mg Mg + 9.5mg K each), taken whole
 
   const ITEM_INFO = {
     mg:    {label:'Магний', badge:'Mg', badgeClass:'badge-mg', dose:'1 таблетка (150 мг)', time:'Будни — после 19:00; сб/вс — в любое время', note:'Отдельно от кальция'},
     caD:   {label:'Кальций + D3', badge:'Ca+D', badgeClass:'badge-cad', dose:'1 таблетка (200 мг Ca + 600 МЕ D3)', time:'Будни — после 19:00; сб/вс — в любое время', note:'Отдельно от магния'},
-    c:     {label:'Витамин C', badge:'C½', badgeClass:'badge-c', dose:'½ таблетки (450 мг)', time:'Любое время', note:'Ежедневно, пока не закончится (~8 дней)'},
+    c:     {label:'Витамин C (старый)', badge:'C½', badgeClass:'badge-c', dose:'½ таблетки (450 мг)', time:'Любое время', note:'Долепиваем остаток — на 2 дня'},
+    c_new: {label:'Витамин C (новый)', badge:'C900', badgeClass:'badge-c-new', dose:'1 целая таблетка (900 мг C + 40 мг Mg + 9,5 мг K)', time:'Любое время', note:'Тоже шипучая — если день совпал с основным магнием, суммарно выйдет ≈190 мг Mg, это ещё в пределах нормы'},
     workout: {label:'Тренировка дома (полная)', badge:'Тр', badgeClass:'badge-workout', dose:'20–25 минут, силовой формат на всё тело', time:'Любое удобное время', note:'≈200–250 ккал · присед, выпады, планка, отжимания'},
     recovery: {label:'Лёгкое восстановление', badge:'St', badgeClass:'badge-recovery', dose:'10–15 минут растяжки/мобилити', time:'Любое удобное время', note:'Не силовая нагрузка — снимает закрепощение после субботней тренировки'}
   };
@@ -544,7 +565,11 @@
         if(MG_DAYS.has(wd) && counters.mg < DOSES_NEEDED.mg){ items.push('mg'); counters.mg++; }
         if(CAD_DAYS.has(wd) && counters.caD < DOSES_NEEDED.caD){ items.push('caD'); counters.caD++; }
       }
-      if(counters.c < DOSES_NEEDED.c){ items.push('c'); counters.c++; }
+      if(d >= C_START){
+        const dayDiff = Math.round((d - C_START) / 86400000);
+        if(dayDiff < C_OLD_REMAINING){ items.push('c'); }
+        else if(dayDiff < C_OLD_REMAINING + C_NEW_COUNT){ items.push('c_new'); }
+      }
       if(WORKOUT_FULL.has(wd)) items.push('workout');
       if(WORKOUT_LIGHT.has(wd)) items.push('recovery');
 
